@@ -20,10 +20,12 @@ from schema_salad.ref_resolver import file_uri, uri_file_path
 from schema_salad.sourceline import SourceLine, indent
 from six.moves import urllib
 
+from cwltool.singularity import SingularityCommandLineJob
 from .builder import CONTENT_LIMIT, Builder, substitute
+from .docker import DockerCommandLineJob
 from .errors import WorkflowException
 from .flatten import flatten
-from .job import CommandLineJob, DockerCommandLineJob, JobBase
+from .job import CommandLineJob, JobBase
 from .pathmapper import (PathMapper, adjustDirObjs, adjustFileObjs,
                          get_listing, trim_listing, visit_class)
 from .process import (Process, UnsupportedRequirement,
@@ -213,7 +215,10 @@ class CommandLineTool(Process):
                         _logger.warning(DEFAULT_CONTAINER_MSG % (windows_default_container_id, windows_default_container_id))
 
         if dockerReq and use_container:
-            return DockerCommandLineJob()
+            if kwargs['singularity']:
+                return SingularityCommandLineJob()
+            else:
+                return DockerCommandLineJob()
         else:
             for t in reversed(self.requirements):
                 if t["class"] == "DockerRequirement":
