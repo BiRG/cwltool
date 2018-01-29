@@ -30,7 +30,7 @@ from .process import (Process, UnsupportedRequirement,
                       _logger_validation_warnings, compute_checksums,
                       normalizeFilesDirs, shortname, uniquename)
 from .stdfsaccess import StdFsAccess
-from .utils import aslist, docker_windows_path_adjust, convert_pathsep_to_unix, windows_default_container_id, onWindows
+from .utils import aslist, docker_path_adjust, convert_pathsep_to_unix, windows_default_container_id, onWindows
 from six.moves import map
 
 ACCEPTLIST_EN_STRICT_RE = re.compile(r"^[a-zA-Z0-9._+-]+$")
@@ -176,7 +176,7 @@ class CallbackJob(object):
 def check_adjust(builder, f):
     # type: (Builder, Dict[Text, Any]) -> Dict[Text, Any]
 
-    f["path"] = docker_windows_path_adjust(builder.pathmapper.mapper(f["location"])[1])
+    f["path"] = docker_path_adjust(builder.pathmapper.mapper(f["location"])[1])
     f["dirname"], f["basename"] = os.path.split(f["path"])
     if f["class"] == "File":
         f["nameroot"], f["nameext"] = os.path.splitext(f["basename"])

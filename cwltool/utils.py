@@ -9,8 +9,10 @@ import six
 from six.moves import urllib
 from six.moves import zip_longest
 from typing import Any,Callable, Dict, List, Tuple, Text, Union
+from . import in_docker
 
 windows_default_container_id = "frolvlad/alpine-bash"
+
 
 def aslist(l):  # type: (Any) -> List[Any]
     if isinstance(l, list):
@@ -59,7 +61,7 @@ def copytree_with_merge(src, dst, symlinks=False, ignore=None):
 
 # changes windowspath(only) appropriately to be passed to docker run command
 # as docker treat them as unix paths so convert C:\Users\foo to /C/Users/foo
-def docker_windows_path_adjust(path):
+def docker_path_adjust(path):
     # type: (Text) -> (Text)
     if path is not None and onWindows():
         sp=path.split(':')
@@ -67,14 +69,19 @@ def docker_windows_path_adjust(path):
             sp[0]=sp[0].capitalize()  # Capitalizing windows Drive letters
             path=':'.join(sp)
         path = path.replace(':', '').replace('\\', '/')
-        return path if path[0] == '/' else '/' + path
+        path = path if path[0] == '/' else '/' + path
+    if path is not None and in_docker.in_docker():
+        path = in_docker.translate_path(path)  # not sure how this works on windows.
     return path
 
 
-# changes docker path(only on windows os) appropriately back to Windows path
+# If on windows, changes docker path(only on windows os) appropriately back to Windows path
 # so convert /C/Users/foo to C:\Users\foo
-def docker_windows_reverse_path_adjust(path):
+# If running in docker, translates
+def docker_reverse_path_adjust(path):
     # type: (Text) -> (Text)
+    if path is not None and in_docker.in_docker():
+        path = in_docker.translate_path(path)
     if path is not None and onWindows():
         if path[0] == '/':
             path=path[1:]
@@ -89,11 +96,15 @@ def docker_windows_reverse_path_adjust(path):
 # On docker in windows fileuri do not contain : in path
 # To convert this file uri to windows compatible add : after drove letter,
 # so file:///E/var becomes file:///E:/var
-def docker_windows_reverse_fileuri_adjust(fileuri):
+# DPF: now also translates from in-container path to host path if in container.
+def docker_reverse_fileuri_adjust(fileuri):
     # type: (Text) -> (Text)
     if fileuri is not None and onWindows():
         if urllib.parse.urlsplit(fileuri).scheme == "file":
-            filesplit= fileuri.split("/")
+            if in_docker.in_docker():
+                path = in_docker.translate_path(urllib.parse.urlsplit(fileuri).path)
+                fileuri = 'file://%s' % path
+            filesplit = fileuri.split("/")
             if filesplit[3][-1] != ':':
                 filesplit[3]=filesplit[3]+':'
                 return '/'.join(filesplit)

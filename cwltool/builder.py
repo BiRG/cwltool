@@ -17,7 +17,7 @@ from .mutation import MutationManager
 from .pathmapper import (PathMapper, get_listing, normalizeFilesDirs,
                          visit_class)
 from .stdfsaccess import StdFsAccess
-from .utils import aslist, get_feature, docker_windows_path_adjust, onWindows
+from .utils import aslist, get_feature, docker_path_adjust, onWindows
 
 _logger = logging.getLogger("cwltool")
 
@@ -199,7 +199,7 @@ class Builder(object):
             # Path adjust for windows file path when passing to docker, docker accepts unix like path only
             (docker_req, docker_is_req) = get_feature(self, "DockerRequirement")
             if onWindows() and docker_req is not None:  # docker_req is none only when there is no dockerRequirement mentioned in hints and Requirement
-                return docker_windows_path_adjust(value["path"])
+                return docker_path_adjust(value["path"])
             return value["path"]
         else:
             return Text(value)

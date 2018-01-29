@@ -17,7 +17,7 @@ from typing import (IO, Any, Callable, Dict, Iterable, List, MutableMapping, Tex
 
 import shellescape
 
-from .utils import copytree_with_merge, docker_windows_path_adjust, onWindows
+from .utils import copytree_with_merge, docker_path_adjust, onWindows
 from . import docker
 from .builder import Builder
 from .docker_id import docker_vm_id
@@ -329,13 +329,13 @@ class DockerCommandLineJob(JobBase):
             if vol.type in ("File", "Directory"):
                 if not vol.resolved.startswith("_:"):
                     runtime.append(u"--volume=%s:%s:ro" % (
-                        docker_windows_path_adjust(vol.resolved),
-                        docker_windows_path_adjust(vol.target)))
+                        docker_path_adjust(vol.resolved),
+                        docker_path_adjust(vol.target)))
             elif vol.type == "WritableFile":
                 if self.inplace_update:
                     runtime.append(u"--volume=%s:%s:rw" % (
-                        docker_windows_path_adjust(vol.resolved),
-                        docker_windows_path_adjust(vol.target)))
+                        docker_path_adjust(vol.resolved),
+                        docker_path_adjust(vol.target)))
                 else:
                     shutil.copy(vol.resolved, host_outdir_tgt)
                     ensure_writable(host_outdir_tgt)
@@ -345,8 +345,8 @@ class DockerCommandLineJob(JobBase):
                 else:
                     if self.inplace_update:
                         runtime.append(u"--volume=%s:%s:rw" % (
-                            docker_windows_path_adjust(vol.resolved),
-                            docker_windows_path_adjust(vol.target)))
+                            docker_path_adjust(vol.resolved),
+                            docker_path_adjust(vol.target)))
                     else:
                         shutil.copytree(vol.resolved, host_outdir_tgt)
                         ensure_writable(host_outdir_tgt)
@@ -359,8 +359,8 @@ class DockerCommandLineJob(JobBase):
                     with os.fdopen(fd, "wb") as f:
                         f.write(vol.resolved.encode("utf-8"))
                     runtime.append(u"--volume=%s:%s:rw" % (
-                        docker_windows_path_adjust(createtmp),
-                        docker_windows_path_adjust(vol.target)))
+                        docker_path_adjust(createtmp),
+                        docker_path_adjust(vol.target)))
 
     def run(self, pull_image=True, rm_container=True,
             rm_tmpdir=True, move_outputs="move", **kwargs):
@@ -417,10 +417,10 @@ class DockerCommandLineJob(JobBase):
             runtime = [u"docker", u"run", u"-i"]
 
         runtime.append(u"--volume=%s:%s:rw" % (
-            docker_windows_path_adjust(os.path.realpath(self.outdir)),
+            docker_path_adjust(os.path.realpath(self.outdir)),
             self.builder.outdir))
         runtime.append(u"--volume=%s:%s:rw" % (
-            docker_windows_path_adjust(os.path.realpath(self.tmpdir)), "/tmp"))
+            docker_path_adjust(os.path.realpath(self.tmpdir)), "/tmp"))
 
         self.add_volumes(self.pathmapper, runtime)
         if self.generatemapper:
@@ -431,7 +431,7 @@ class DockerCommandLineJob(JobBase):
             runtime = [x.replace(":rw", "") for x in runtime]
 
         runtime.append(u"--workdir=%s" % (
-            docker_windows_path_adjust(self.builder.outdir)))
+            docker_path_adjust(self.builder.outdir)))
         if not user_space_docker_cmd:
 
             if not kwargs.get("no_read_only"):
