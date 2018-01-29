@@ -32,9 +32,11 @@ def translate_path(path):
     """
     binds = get_binds()
     exps = ['(%s)/(.*)' % key for key in binds.keys()]
+    print('path: %s' % path)
     for exp in exps:
         result = re.search(exp, path)
         if result:
+            print('%s/%s' % (binds[result.group(1)], result.group(2)))
             return '%s/%s' % (binds[result.group(1)], result.group(2))
     raise ValueError('Path %s not present in a bind mount. Volume mount will fail when running this in Docker.' % path)
 
