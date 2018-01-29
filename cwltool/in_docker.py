@@ -15,28 +15,18 @@ def in_docker():
         return False
 
 
-def get_container_id():
-    """
-    Get the ID of the container this is running in if in container
-    exception will be thrown if not running in docker
-    :return: string corresponding to id of container this is running in
-    """
-    with open('/proc/1/cgroup', 'rt') as cgroup_file:
-        return re.search('name=(\w+):/docker/(\w+)', cgroup_file.read()).group(2)
-
-
 def translate_path(path):
     """
     :param path: A string representing a path within the container
     :return: A string representing a path on the host (or the original path if the path is not in a bound volume)
     """
     binds = get_binds()
+    if path in binds.keys():
+        return binds[path]
     exps = ['(%s)/(.*)' % key for key in binds.keys()]
-    print('path: %s' % path)
     for exp in exps:
         result = re.search(exp, path)
         if result:
-            print('%s/%s' % (binds[result.group(1)], result.group(2)))
             return '%s/%s' % (binds[result.group(1)], result.group(2))
     raise ValueError('Path %s not present in a bind mount. Volume mount will fail when running this in Docker.' % path)
 
