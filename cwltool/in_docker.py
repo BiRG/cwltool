@@ -36,7 +36,7 @@ def translate_path(path):
         result = re.search(exp, path)
         if result:
             return '%s/%s' % (binds[result.group(1)], result.group(2))
-    raise ValueError('Path not present in a bind mount. Volume mount will fail when running this in Docker.')
+    raise ValueError('Path %s not present in a bind mount. Volume mount will fail when running this in Docker.' % path)
 
 
 def get_current_container():
